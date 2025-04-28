@@ -170,6 +170,6 @@ class SpellCheckCategoryServiceImplTest {
 
         List<SpellCheckCategory> result = spellCheckCategoryService.getSpellChecksByCategory("test");
         assertEquals(2, result.size());
-        verify(spellCheckCategoryRepository).findByCategoryName("test");
+        verify(spellCheckCategoryRepository).findByCategoryName("test");;
     }
 }

@@ -141,11 +141,11 @@
 					<linkXRef>false</linkXRef>
 				</configuration>
 				<dependencies>
-					<dependency>
-						<groupId>com.puppycrawl.tools</groupId>
-						<artifactId>checkstyle</artifactId>
-						<version>10.23.0</version>
-					</dependency>
+<!--					<dependency>-->
+<!--&lt;!&ndash;						<groupId>com.puppycrawl.tools</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;						<artifactId>checkstyle</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;						<version>10.23.0</version>&ndash;&gt;-->
+<!--					</dependency>-->
 
 				</dependencies>
 			</plugin>

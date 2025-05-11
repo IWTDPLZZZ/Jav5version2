@@ -1,7 +1,10 @@
 package orf.demo.service;
 
 import orf.demo.checker.SpellChecker;
+import orf.demo.dto.BulkSpellCheckRequest;
 import orf.demo.dto.SpellCheckResponse;
+import orf.demo.model.SpellCheckCategory;
+import orf.demo.repository.SpellCheckCategoryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,7 +21,13 @@ import static org.mockito.Mockito.*;
 class SpellCheckServiceImplTest {
 
     @Mock
-    private SpellChecker spellChecker;
+    private SpellChecker simpleSpellChecker;
+
+    @Mock
+    private SpellChecker apiSpellChecker;
+
+    @Mock
+    private SpellCheckCategoryRepository spellCheckCategoryRepository;
 
     @InjectMocks
     private SpellCheckServiceImpl spellCheckService;
@@ -26,27 +35,27 @@ class SpellCheckServiceImplTest {
     @Test
     void testCheckSpelling_ValidText_ReturnsCorrectResponse() {
         String text = "hello";
-        when(spellChecker.checkSpelling(text)).thenReturn("Correct");
+        when(simpleSpellChecker.checkSpelling(text)).thenReturn("Correct");
         String result = spellCheckService.checkSpelling(text);
         assertEquals("Correct", result);
-        verify(spellChecker).checkSpelling(text);
+        verify(simpleSpellChecker).checkSpelling(text);
     }
 
     @Test
     void testCheckSpelling_InvalidText_ReturnsIncorrectResponse() {
         String text = "hi";
-        when(spellChecker.checkSpelling(text)).thenReturn("Incorrect");
+        when(simpleSpellChecker.checkSpelling(text)).thenReturn("Incorrect");
         String result = spellCheckService.checkSpelling(text);
         assertEquals("Incorrect", result);
-        verify(spellChecker).checkSpelling(text);
+        verify(simpleSpellChecker).checkSpelling(text);
     }
 
     @Test
     void testCheckSpellingBulk_MixedTexts_ReturnsCorrectResults() {
         List<String> texts = Arrays.asList("hello", "hi", "world");
-        when(spellChecker.checkSpelling("hello")).thenReturn("Correct");
-        when(spellChecker.checkSpelling("hi")).thenReturn("Incorrect");
-        when(spellChecker.checkSpelling("world")).thenReturn("Correct");
+        when(simpleSpellChecker.checkSpelling("hello")).thenReturn("Correct");
+        when(simpleSpellChecker.checkSpelling("hi")).thenReturn("Incorrect");
+        when(simpleSpellChecker.checkSpelling("world")).thenReturn("Correct");
 
         List<SpellCheckResponse> results = spellCheckService.checkSpellingBulk(texts);
         assertEquals(3, results.size());
@@ -56,7 +65,7 @@ class SpellCheckServiceImplTest {
         assertFalse(results.get(1).isCorrect());
         assertEquals("world", results.get(2).getText());
         assertTrue(results.get(2).isCorrect());
-        verify(spellChecker, times(3)).checkSpelling(anyString());
+        verify(simpleSpellChecker, times(3)).checkSpelling(anyString());
     }
 
     @Test
@@ -64,7 +73,7 @@ class SpellCheckServiceImplTest {
         List<String> texts = Arrays.asList();
         List<SpellCheckResponse> results = spellCheckService.checkSpellingBulk(texts);
         assertTrue(results.isEmpty());
-        verify(spellChecker, never()).checkSpelling(anyString());
+        verify(simpleSpellChecker, never()).checkSpelling(anyString());
     }
 
     @Test
@@ -72,37 +81,101 @@ class SpellCheckServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> {
             spellCheckService.checkSpellingBulk(null);
         });
-        verify(spellChecker, never()).checkSpelling(anyString());
+        verify(simpleSpellChecker, never()).checkSpelling(anyString());
     }
 
     @Test
-    void testCheckSpellingBulkWithParams_MixedTexts_ReturnsCorrectResults() {
-        List<String> texts = Arrays.asList("hello", null, "world");
-        when(spellChecker.checkSpelling("hello")).thenReturn("Correct");
-        when(spellChecker.checkSpelling("world")).thenReturn("Correct");
+    void testCheckSpellingBulkWithParams_SimpleChecker_MixedTexts_ReturnsCorrectResults() {
+        BulkSpellCheckRequest request = new BulkSpellCheckRequest();
+        request.setTexts(Arrays.asList("hello", null, "world"));
+        request.setCheckerType("simple");
+        request.setCategoryName(null);
 
-        List<SpellCheckResponse> results = spellCheckService.checkSpellingBulkWithParams(texts);
+        when(simpleSpellChecker.checkSpelling("hello")).thenReturn("Correct");
+        when(simpleSpellChecker.checkSpelling("world")).thenReturn("Correct");
+
+        List<SpellCheckResponse> results = spellCheckService.checkSpellingBulkWithParams(request);
         assertEquals(2, results.size());
         assertEquals("hello", results.get(0).getText());
         assertTrue(results.get(0).isCorrect());
         assertEquals("world", results.get(1).getText());
         assertTrue(results.get(1).isCorrect());
-        verify(spellChecker, times(2)).checkSpelling(anyString());
+        verify(simpleSpellChecker, times(2)).checkSpelling(anyString());
+        verify(apiSpellChecker, never()).checkSpelling(anyString());
+        verify(spellCheckCategoryRepository, never()).save(any());
     }
 
     @Test
-    void testCheckSpellingBulkWithParams_EmptyList_ReturnsEmptyList() {
-        List<String> texts = Arrays.asList();
-        List<SpellCheckResponse> results = spellCheckService.checkSpellingBulkWithParams(texts);
-        assertTrue(results.isEmpty());
-        verify(spellChecker, never()).checkSpelling(anyString());
+    void testCheckSpellingBulkWithParams_ApiChecker_MixedTexts_ReturnsCorrectResults() {
+        BulkSpellCheckRequest request = new BulkSpellCheckRequest();
+        request.setTexts(Arrays.asList("hello", "hi"));
+        request.setCheckerType("api");
+        request.setCategoryName(null);
+
+        when(apiSpellChecker.checkSpelling("hello")).thenReturn("Correct");
+        when(apiSpellChecker.checkSpelling("hi")).thenReturn("Incorrect");
+
+        List<SpellCheckResponse> results = spellCheckService.checkSpellingBulkWithParams(request);
+        assertEquals(2, results.size());
+        assertEquals("hello", results.get(0).getText());
+        assertTrue(results.get(0).isCorrect());
+        assertEquals("hi", results.get(1).getText());
+        assertFalse(results.get(1).isCorrect());
+        verify(apiSpellChecker, times(2)).checkSpelling(anyString());
+        verify(simpleSpellChecker, never()).checkSpelling(anyString());
+        verify(spellCheckCategoryRepository, never()).save(any());
     }
 
     @Test
-    void testCheckSpellingBulkWithParams_NullList_ThrowsException() {
+    void testCheckSpellingBulkWithParams_WithCategory_SavesToRepository() {
+        BulkSpellCheckRequest request = new BulkSpellCheckRequest();
+        request.setTexts(Arrays.asList("hello", "hi"));
+        request.setCheckerType("simple");
+        request.setCategoryName("testCategory");
+
+        when(simpleSpellChecker.checkSpelling("hello")).thenReturn("Correct");
+        when(simpleSpellChecker.checkSpelling("hi")).thenReturn("Incorrect");
+        when(spellCheckCategoryRepository.save(any(SpellCheckCategory.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<SpellCheckResponse> results = spellCheckService.checkSpellingBulkWithParams(request);
+        assertEquals(2, results.size());
+        assertEquals("hello", results.get(0).getText());
+        assertTrue(results.get(0).isCorrect());
+        assertEquals("hi", results.get(1).getText());
+        assertFalse(results.get(1).isCorrect());
+        verify(simpleSpellChecker, times(2)).checkSpelling(anyString());
+        verify(spellCheckCategoryRepository, times(2)).save(any(SpellCheckCategory.class));
+    }
+
+    @Test
+    void testCheckSpellingBulkWithParams_EmptyList_ThrowsException() {
+        BulkSpellCheckRequest request = new BulkSpellCheckRequest();
+        request.setTexts(Arrays.asList());
+        assertThrows(IllegalArgumentException.class, () -> {
+            spellCheckService.checkSpellingBulkWithParams(request);
+        });
+        verify(simpleSpellChecker, never()).checkSpelling(anyString());
+        verify(apiSpellChecker, never()).checkSpelling(anyString());
+    }
+
+    @Test
+    void testCheckSpellingBulkWithParams_NullRequest_ThrowsException() {
         assertThrows(IllegalArgumentException.class, () -> {
             spellCheckService.checkSpellingBulkWithParams(null);
         });
-        verify(spellChecker, never()).checkSpelling(anyString());
+        verify(simpleSpellChecker, never()).checkSpelling(anyString());
+        verify(apiSpellChecker, never()).checkSpelling(anyString());
+    }
+
+    @Test
+    void testCheckSpellingBulkWithParams_NullTextList_ThrowsException() {
+        BulkSpellCheckRequest request = new BulkSpellCheckRequest();
+        request.setTexts(null);
+        assertThrows(IllegalArgumentException.class, () -> {
+            spellCheckService.checkSpellingBulkWithParams(request);
+        });
+        verify(simpleSpellChecker, never()).checkSpelling(anyString());
+        verify(apiSpellChecker, never()).checkSpelling(anyString());
     }
 }

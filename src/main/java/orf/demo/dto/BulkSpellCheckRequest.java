@@ -9,4 +9,6 @@ import java.util.List;
 @Setter
 public class BulkSpellCheckRequest {
     private List<String> texts;
+    private String checkerType;
+    private String categoryName;
 }

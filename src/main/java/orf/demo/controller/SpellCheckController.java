@@ -36,10 +36,7 @@ public class SpellCheckController {
 
     @PostMapping("/bulk-params")
     public ResponseEntity<List<SpellCheckResponse>> checkSpellingBulkWithParams(@RequestBody BulkSpellCheckRequest request) {
-        if (request.getTexts() == null || request.getTexts().isEmpty()) {
-            throw new IllegalArgumentException("Список текстов не может быть пустым или null");
-        }
-        List<SpellCheckResponse> responses = spellCheckService.checkSpellingBulkWithParams(request.getTexts());
+        List<SpellCheckResponse> responses = spellCheckService.checkSpellingBulkWithParams(request);
         return ResponseEntity.ok(responses);
     }
 }

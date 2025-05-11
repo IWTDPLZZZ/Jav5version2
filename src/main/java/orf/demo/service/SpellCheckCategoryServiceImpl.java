@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-
 @Service
 public class SpellCheckCategoryServiceImpl implements SpellCheckCategoryService {
 
@@ -29,14 +28,12 @@ public class SpellCheckCategoryServiceImpl implements SpellCheckCategoryService 
         this.spellCheckCache = spellCheckCache;
     }
 
-
     @Override
     public List<SpellCheckCategory> getAllSpellChecks() {
         List<SpellCheckCategory> spellChecks = spellCheckCategoryRepository.findAll();
         spellChecks.forEach(spellCheck -> Hibernate.initialize(spellCheck.getCategories()));
         return spellChecks;
     }
-
 
     @Override
     public SpellCheckCategory getSpellCheckById(Long id) {
@@ -46,12 +43,10 @@ public class SpellCheckCategoryServiceImpl implements SpellCheckCategoryService 
         return spellCheck;
     }
 
-
     @Override
     public SpellCheckCategory saveSpellCheck(SpellCheckCategory spellCheck) {
         return spellCheckCategoryRepository.save(spellCheck);
     }
-
 
     @Override
     public SpellCheckCategory updateSpellCheck(Long id, SpellCheckCategory spellCheck) {
@@ -63,7 +58,6 @@ public class SpellCheckCategoryServiceImpl implements SpellCheckCategoryService 
         return spellCheckCategoryRepository.save(existingSpellCheck);
     }
 
-
     @Override
     public void deleteSpellCheck(Long id) {
         if (!spellCheckCategoryRepository.existsById(id)) {
@@ -71,7 +65,6 @@ public class SpellCheckCategoryServiceImpl implements SpellCheckCategoryService 
         }
         spellCheckCategoryRepository.deleteById(id);
     }
-
 
     @Override
     public void addCategoryToSpellCheck(Long spellCheckId, Long categoryId) {
@@ -84,7 +77,6 @@ public class SpellCheckCategoryServiceImpl implements SpellCheckCategoryService 
         spellCheckCategoryRepository.save(spellCheck);
     }
 
-
     @Override
     public void removeCategoryFromSpellCheck(Long spellCheckId, Long categoryId) {
         SpellCheckCategory spellCheck = spellCheckCategoryRepository.findById(spellCheckId)
@@ -95,7 +87,6 @@ public class SpellCheckCategoryServiceImpl implements SpellCheckCategoryService 
         spellCheck.removeCategory(category);
         spellCheckCategoryRepository.save(spellCheck);
     }
-
 
     @Override
     public List<SpellCheckCategory> getSpellChecksByCategory(String categoryName) {
@@ -108,7 +99,6 @@ public class SpellCheckCategoryServiceImpl implements SpellCheckCategoryService 
         spellCheckCache.put(categoryName, spellChecks);
         return spellChecks;
     }
-
 
     @Override
     public List<SpellCheckCategory> findByErrorAndCategoryName(String error, String categoryName) {
